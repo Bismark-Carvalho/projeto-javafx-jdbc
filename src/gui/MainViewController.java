@@ -3,6 +3,7 @@ package gui;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 import application.Main;
 import gui.util.Alerts;
@@ -35,35 +36,19 @@ public class MainViewController implements Initializable {
 
 	@FXML
 	public void onMenuItemDepartmentAction() {
-		loadView2("/gui/DepartmentListView.fxml");
+		loadView("/gui/DepartmentListView.fxml", (DepartmentListViewController controller) -> {
+			controller.setDepartmentService(new DepartmentService());
+			controller.updateTableView();
+		});
 
 	}
 
 	@FXML
 	public void onMenuItemAboutAction() {
-		loadView("/gui/AboutView.fxml");
+		loadView("/gui/AboutView.fxml", x -> {});
 	}
 
-	private synchronized void loadView(String absolutename) {
-		try {
-
-			FXMLLoader loader = new FXMLLoader(getClass().getResource(absolutename));
-			VBox newvbox = loader.load();
-
-			Scene mainScene = Main.getMainScene();
-			VBox mainVbox = (VBox) ((ScrollPane) mainScene.getRoot()).getContent();
-
-			Node mainMenu = mainVbox.getChildren().get(0);
-			mainVbox.getChildren().clear();
-			mainVbox.getChildren().add(mainMenu);
-			mainVbox.getChildren().addAll(newvbox.getChildren());
-
-		} catch (IOException e) {
-			Alerts.showAlerts("Io Exception", null, e.getMessage(), AlertType.ERROR);
-		}
-	}
-
-	private synchronized void loadView2(String absolutename) {
+	private synchronized <T> void loadView(String absolutename, Consumer<T> InitializedAction ) {
 		try {
 
 			FXMLLoader loader = new FXMLLoader(getClass().getResource(absolutename));
@@ -77,15 +62,15 @@ public class MainViewController implements Initializable {
 			mainVbox.getChildren().add(mainMenu);
 			mainVbox.getChildren().addAll(newvbox.getChildren());
 			
-			DepartmentListViewController controller = loader.getController();
-			controller.setDepartmentService(new DepartmentService());
-			controller.updateTableView();
-						
+			T controller = loader.getController();
+			InitializedAction.accept(controller);
 
 		} catch (IOException e) {
 			Alerts.showAlerts("Io Exception", null, e.getMessage(), AlertType.ERROR);
 		}
 	}
+
+
 
 	@Override
 	public void initialize(URL url, ResourceBundle rb) {
